@@ -3,5 +3,11 @@ import streamlit as st
 
 st.set_page_config(page_title="AI Data Analyst", layout="wide")
 
-st.title("AI Data Analyst")
-st.write("Use Data Management to upload Excel files, then open Chat to ask simple data-quality questions.")
+pages = st.navigation(
+	[
+		st.Page("pages/2_Chat.py", title="Chat"),
+		st.Page("pages/1_Data_Management.py", title="Data Management"),
+	]
+)
+
+pages.run()

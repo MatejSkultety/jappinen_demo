@@ -103,7 +103,8 @@ def answer_question(question: str, file_name: str) -> str:
     return "I could not map that question to a simple supported check."
 
 
-st.title("Chat")
+st.title("AI Data Analyst")
+st.write("Use Data Management to upload Excel files, then open Chat to ask simple data-quality questions.")
 
 files = list_uploaded_files()
 if not files:
