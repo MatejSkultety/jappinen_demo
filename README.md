@@ -20,7 +20,6 @@ Very small Streamlit proof of concept for uploading Excel files and asking simpl
 3. Set environment variables:
 
 	- `OPENAI_API_KEY`
-	- optional: `OPENAI_MODEL` (defaults to `gpt-4o-mini`)
 
 4. Start the app:
 
@@ -40,4 +39,3 @@ Very small Streamlit proof of concept for uploading Excel files and asking simpl
 ## Environment variables
 
 - `OPENAI_API_KEY` - required for chat routing.
-- `OPENAI_MODEL` - optional, defaults to `gpt-4o-mini`.
