@@ -4,7 +4,7 @@ import pandas as pd
 import streamlit as st
 from openai import OpenAI
 
-from src.config import OPENAI_API_KEY, OPENAI_MODEL
+from src.config import OPENAI_API_KEY
 from src.db import get_connection, table_columns, table_row_count
 from src.file_store import list_uploaded_files
 from src.ingest import ingest_excel_file, tables_for_file
@@ -41,7 +41,7 @@ def classify_question(question: str, tables: list[str]) -> dict:
 
     client = OpenAI(api_key=OPENAI_API_KEY)
     response = client.chat.completions.create(
-        model=OPENAI_MODEL,
+        model="gpt-4o-mini",
         temperature=0,
         messages=[
             {
