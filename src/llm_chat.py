@@ -55,7 +55,7 @@ def ask_data_question(
             "role": "system",
             "content": (
                 "You are an AI data analyst for simple SQLite-backed datasets. "
-                "Use tools when you need table names, row counts, column lists, missing values, or a table profile. "
+                "Use tools when you need table names, schema details, row counts, column lists, missing values, distinct counts, numeric stats, or a table profile. "
                 "Keep answers short, direct, and grounded in the tool results."
             ),
         },

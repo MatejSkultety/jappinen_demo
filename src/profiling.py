@@ -14,6 +14,50 @@ def missing_values_by_column(connection, table_name: str) -> dict[str, int]:
     return {column: int(row[column] or 0) for column in columns}
 
 
+def distinct_count(connection, table_name: str, column_name: str) -> int:
+    row = connection.execute(
+        f"SELECT COUNT(DISTINCT {quote_identifier(column_name)}) AS count FROM {quote_identifier(table_name)}"
+    ).fetchone()
+    return int(row["count"])
+
+
+def column_numeric_stats(connection, table_name: str, column_name: str) -> dict:
+    rows = connection.execute(
+        f"SELECT {quote_identifier(column_name)} AS value FROM {quote_identifier(table_name)} WHERE {quote_identifier(column_name)} IS NOT NULL"
+    ).fetchall()
+
+    numeric_values: list[float] = []
+    non_numeric_count = 0
+
+    for row in rows:
+        value = row["value"]
+        if isinstance(value, bool):
+            numeric_values.append(float(value))
+            continue
+        if isinstance(value, (int, float)):
+            numeric_values.append(float(value))
+            continue
+        if isinstance(value, str):
+            try:
+                numeric_values.append(float(value.strip()))
+                continue
+            except ValueError:
+                non_numeric_count += 1
+                continue
+        non_numeric_count += 1
+
+    return {
+        "table": table_name,
+        "column": column_name,
+        "non_null_count": len(rows),
+        "numeric_count": len(numeric_values),
+        "non_numeric_count": non_numeric_count,
+        "min": min(numeric_values) if numeric_values else None,
+        "max": max(numeric_values) if numeric_values else None,
+        "avg": (sum(numeric_values) / len(numeric_values)) if numeric_values else None,
+    }
+
+
 def profile_table(connection, table_name: str) -> dict:
     columns = table_columns(connection, table_name)
     missing_values = missing_values_by_column(connection, table_name)

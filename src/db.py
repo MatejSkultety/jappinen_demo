@@ -39,3 +39,17 @@ def table_row_count(connection: sqlite3.Connection, table_name: str) -> int:
 def table_columns(connection: sqlite3.Connection, table_name: str) -> list[str]:
     rows = connection.execute(f"PRAGMA table_info({quote_identifier(table_name)})").fetchall()
     return [row["name"] for row in rows]
+
+
+def table_schema(connection: sqlite3.Connection, table_name: str) -> list[dict]:
+    rows = connection.execute(f"PRAGMA table_info({quote_identifier(table_name)})").fetchall()
+    return [
+        {
+            "name": row["name"],
+            "type": row["type"],
+            "notnull": bool(row["notnull"]),
+            "default": row["dflt_value"],
+            "primary_key": bool(row["pk"]),
+        }
+        for row in rows
+    ]

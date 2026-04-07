@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from .db import list_tables, table_columns, table_row_count
-from .profiling import missing_values_by_column, profile_table
+from .db import list_tables, table_columns, table_row_count, table_schema
+from .profiling import column_numeric_stats, distinct_count, missing_values_by_column, profile_table
 
 
 TOOL_DEFINITIONS: list[dict[str, Any]] = [
@@ -34,6 +34,16 @@ TOOL_DEFINITIONS: list[dict[str, Any]] = [
         "executor": lambda connection, arguments: table_columns(connection, arguments["table_name"]),
     },
     {
+        "name": "table_schema",
+        "description": "Return schema details for all columns in a table.",
+        "parameters": {
+            "type": "object",
+            "properties": {"table_name": {"type": "string"}},
+            "required": ["table_name"],
+        },
+        "executor": lambda connection, arguments: table_schema(connection, arguments["table_name"]),
+    },
+    {
         "name": "missing_values_by_column",
         "description": "Return missing-value counts for each column in a table.",
         "parameters": {
@@ -52,6 +62,36 @@ TOOL_DEFINITIONS: list[dict[str, Any]] = [
             "required": ["table_name"],
         },
         "executor": lambda connection, arguments: profile_table(connection, arguments["table_name"]),
+    },
+    {
+        "name": "distinct_count",
+        "description": "Return the number of distinct values in a column.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "table_name": {"type": "string"},
+                "column_name": {"type": "string"},
+            },
+            "required": ["table_name", "column_name"],
+        },
+        "executor": lambda connection, arguments: distinct_count(
+            connection, arguments["table_name"], arguments["column_name"]
+        ),
+    },
+    {
+        "name": "column_numeric_stats",
+        "description": "Return basic numeric statistics for a column.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "table_name": {"type": "string"},
+                "column_name": {"type": "string"},
+            },
+            "required": ["table_name", "column_name"],
+        },
+        "executor": lambda connection, arguments: column_numeric_stats(
+            connection, arguments["table_name"], arguments["column_name"]
+        ),
     },
 ]
 
