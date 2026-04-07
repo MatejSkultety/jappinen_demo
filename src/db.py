@@ -1,6 +1,8 @@
 import sqlite3
+from pathlib import Path
 
-from .config import DB_PATH
+
+DB_PATH = Path("db/data_quality.db")
 
 
 def ensure_db_dir() -> None:
