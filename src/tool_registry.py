@@ -1,0 +1,80 @@
+from __future__ import annotations
+
+from typing import Any
+
+from .db import list_tables, table_columns, table_row_count
+from .profiling import missing_values_by_column, profile_table
+
+
+TOOL_DEFINITIONS: list[dict[str, Any]] = [
+    {
+        "name": "list_tables",
+        "description": "List all SQLite tables currently available.",
+        "parameters": {"type": "object", "properties": {}, "required": []},
+        "executor": lambda connection, _: list_tables(connection),
+    },
+    {
+        "name": "table_row_count",
+        "description": "Return the number of rows in a table.",
+        "parameters": {
+            "type": "object",
+            "properties": {"table_name": {"type": "string"}},
+            "required": ["table_name"],
+        },
+        "executor": lambda connection, arguments: table_row_count(connection, arguments["table_name"]),
+    },
+    {
+        "name": "table_columns",
+        "description": "Return the column names for a table.",
+        "parameters": {
+            "type": "object",
+            "properties": {"table_name": {"type": "string"}},
+            "required": ["table_name"],
+        },
+        "executor": lambda connection, arguments: table_columns(connection, arguments["table_name"]),
+    },
+    {
+        "name": "missing_values_by_column",
+        "description": "Return missing-value counts for each column in a table.",
+        "parameters": {
+            "type": "object",
+            "properties": {"table_name": {"type": "string"}},
+            "required": ["table_name"],
+        },
+        "executor": lambda connection, arguments: missing_values_by_column(connection, arguments["table_name"]),
+    },
+    {
+        "name": "profile_table",
+        "description": "Return a small profile summary for a table.",
+        "parameters": {
+            "type": "object",
+            "properties": {"table_name": {"type": "string"}},
+            "required": ["table_name"],
+        },
+        "executor": lambda connection, arguments: profile_table(connection, arguments["table_name"]),
+    },
+]
+
+
+def get_tool_registry() -> dict[str, dict[str, Any]]:
+    return {
+        tool_definition["name"]: {
+            "description": tool_definition["description"],
+            "executor": tool_definition["executor"],
+        }
+        for tool_definition in TOOL_DEFINITIONS
+    }
+
+
+def get_tool_schemas() -> list[dict[str, Any]]:
+    return [
+        {
+            "type": "function",
+            "function": {
+                "name": tool_definition["name"],
+                "description": tool_definition["description"],
+                "parameters": tool_definition["parameters"],
+            },
+        }
+        for tool_definition in TOOL_DEFINITIONS
+    ]
