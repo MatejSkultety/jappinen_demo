@@ -15,6 +15,7 @@ load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 CONTEXT_SIZE = 20
 TOOL_USAGE_LIMIT = 10
+LLM_MODEL = "gpt-4o-mini"
 
 
 def debug_log(label: str, value: object) -> None:
@@ -127,7 +128,7 @@ def ask_data_question(
     for _ in range(TOOL_USAGE_LIMIT):
         debug_log("requesting completion", {"model": "gpt-4o-mini", "tool_count": len(get_tool_schemas())})
         response = client.chat.completions.create(
-            model="gpt-4o-mini",
+            model=LLM_MODEL,
             temperature=0,
             messages=messages,
             tools=get_tool_schemas(),
