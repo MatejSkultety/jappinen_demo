@@ -13,6 +13,8 @@ from .tool_registry import get_tool_registry, get_tool_schemas
 
 load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+CONTEXT_SIZE = 20
+TOOL_USAGE_LIMIT = 10
 
 
 def build_context(selected_tables: list[str]) -> str:
@@ -38,11 +40,16 @@ def execute_tool_call(tool_name: str, arguments_json: str, connection: sqlite3.C
         return {"error": f"Tool failed: {tool_name}", "details": str(exc)}
 
 
-def ask_data_question(question: str, selected_tables: list[str]) -> str:
+def ask_data_question(
+    question: str,
+    selected_tables: list[str],
+    conversation_messages: list[dict[str, str]] | None = None,
+) -> str:
     if not OPENAI_API_KEY:
         return "OpenAI API key is missing."
 
     client = OpenAI(api_key=OPENAI_API_KEY)
+    recent_messages = (conversation_messages or [])[-CONTEXT_SIZE:]
     messages = [
         {
             "role": "system",
@@ -52,10 +59,12 @@ def ask_data_question(question: str, selected_tables: list[str]) -> str:
                 "Keep answers short, direct, and grounded in the tool results."
             ),
         },
-        {"role": "user", "content": f"{build_context(selected_tables)}\nQuestion: {question}"},
+        {"role": "system", "content": build_context(selected_tables)},
+        *recent_messages,
+        {"role": "user", "content": question},
     ]
 
-    for _ in range(4):
+    for _ in range(TOOL_USAGE_LIMIT):
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             temperature=0,

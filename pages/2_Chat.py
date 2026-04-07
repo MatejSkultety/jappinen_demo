@@ -45,6 +45,6 @@ if question:
         st.warning("Select at least one dataset first.")
     else:
         st.session_state.messages.append({"role": "user", "content": question})
-        answer = ask_data_question(question, selected_tables)
+        answer = ask_data_question(question, selected_tables, st.session_state.messages[:-1])
         st.session_state.messages.append({"role": "assistant", "content": answer})
         st.rerun()
