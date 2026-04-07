@@ -20,6 +20,59 @@ def quote_identifier(name: str) -> str:
     return '"' + name.replace('"', '""') + '"'
 
 
+def _normalize_sql(sql: str) -> str:
+    statement = sql.strip()
+    if statement.endswith(";"):
+        statement = statement[:-1].strip()
+    return statement
+
+
+def _is_read_only_sql(sql: str) -> bool:
+    if not sql:
+        return False
+    if ";" in sql:
+        return False
+
+    first_token = sql.lstrip().split(None, 1)[0].lower()
+    return first_token in {"select", "with"}
+
+
+def run_read_only_sql_query(connection: sqlite3.Connection, sql: str, max_rows: int = 100) -> dict:
+    statement = _normalize_sql(sql)
+    if not _is_read_only_sql(statement):
+        return {
+            "error": "Only single-statement read-only SELECT/WITH queries are allowed.",
+        }
+
+    allowed_actions = {
+        getattr(sqlite3, "SQLITE_SELECT", None),
+        getattr(sqlite3, "SQLITE_READ", None),
+        getattr(sqlite3, "SQLITE_FUNCTION", None),
+    }
+    allowed_actions.discard(None)
+
+    def authorizer(action_code, _param1, _param2, _db_name, _trigger_name):
+        if action_code in allowed_actions:
+            return sqlite3.SQLITE_OK
+        return sqlite3.SQLITE_DENY
+
+    connection.set_authorizer(authorizer)
+    try:
+        cursor = connection.execute(statement)
+        rows = cursor.fetchmany(max_rows)
+        return {
+            "sql": statement,
+            "columns": [description[0] for description in cursor.description or []],
+            "rows": [dict(row) for row in rows],
+            "returned_row_count": len(rows),
+            "truncated": len(rows) == max_rows,
+        }
+    except sqlite3.DatabaseError as exc:
+        return {"error": "SQL execution failed.", "details": str(exc)}
+    finally:
+        connection.set_authorizer(None)
+
+
 def list_tables(connection: sqlite3.Connection) -> list[str]:
     rows = connection.execute(
         "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name"

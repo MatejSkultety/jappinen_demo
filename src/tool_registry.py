@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from .db import list_tables, table_columns, table_row_count, table_schema
+from .db import list_tables, run_read_only_sql_query, table_columns, table_row_count, table_schema
 from .profiling import column_numeric_stats, distinct_count, missing_values_by_column, profile_table
 
 
@@ -92,6 +92,18 @@ TOOL_DEFINITIONS: list[dict[str, Any]] = [
         "executor": lambda connection, arguments: column_numeric_stats(
             connection, arguments["table_name"], arguments["column_name"]
         ),
+    },
+    {
+        "name": "read_only_sql_query",
+        "description": "Execute a single read-only SELECT or WITH SQL query and return rows.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "sql": {"type": "string"},
+            },
+            "required": ["sql"],
+        },
+        "executor": lambda connection, arguments: run_read_only_sql_query(connection, arguments["sql"]),
     },
 ]
 
