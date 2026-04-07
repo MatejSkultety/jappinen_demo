@@ -7,6 +7,10 @@ from src.llm_chat import ask_data_question
 st.title("AI Data Analyst")
 st.write("Ask simple data-quality questions about the ingested datasets.")
 
+if st.button("Reset conversation"):
+    st.session_state.messages = []
+    st.rerun()
+
 datasets = list_datasets()
 if not datasets:
     st.info("Upload an Excel file in Data Management first.")
