@@ -1,14 +1,12 @@
 import json
 
-import pandas as pd
 import streamlit as st
 from openai import OpenAI
 
 from src.config import OPENAI_API_KEY
 from src.db import get_connection, table_columns, table_row_count
-from src.file_store import list_uploaded_files
-from src.ingest import ingest_excel_file, tables_for_file
-from src.profiling import file_table_summaries, missing_values_by_column, profile_table
+from src.ingest import list_datasets, tables_for_datasets
+from src.profiling import missing_values_by_column, profile_table
 
 
 def match_table_name(question: str, tables: list[str]) -> str | None:
@@ -62,10 +60,9 @@ def classify_question(question: str, tables: list[str]) -> dict:
         return {"intent": "unsupported"}
 
 
-def answer_question(question: str, file_name: str) -> str:
-    tables = tables_for_file(file_name)
+def answer_question(question: str, tables: list[str]) -> str:
     if not tables:
-        return "No tables were created for this file yet."
+        return "No tables were created for the selected datasets yet."
 
     intent = classify_question(question, tables)
     intent_name = intent.get("intent")
@@ -104,32 +101,32 @@ def answer_question(question: str, file_name: str) -> str:
 
 
 st.title("AI Data Analyst")
-st.write("Use Data Management to upload Excel files, then open Chat to ask simple data-quality questions.")
+st.write("Ask simple data-quality questions about the ingested datasets.")
 
-files = list_uploaded_files()
-if not files:
+datasets = list_datasets()
+if not datasets:
     st.info("Upload an Excel file in Data Management first.")
     st.stop()
 
-selected_file = st.selectbox("Choose an uploaded file", files)
-if st.button("Load file into SQLite"):
-    ingest_excel_file(selected_file)
-    st.session_state.active_file = selected_file
-    st.success("File loaded into SQLite.")
-    st.rerun()
+use_all = st.checkbox("Use all datasets", value=st.session_state.get("use_all_datasets", False))
+st.session_state.use_all_datasets = use_all
 
-active_file = st.session_state.get("active_file")
-if active_file not in files:
-    active_file = None
+if use_all:
+    selected_datasets = datasets
+else:
+    selected_datasets = st.multiselect(
+        "Choose datasets",
+        datasets,
+        default=st.session_state.get("selected_datasets", datasets[:1]),
+    )
+    st.session_state.selected_datasets = selected_datasets
 
-if active_file:
-    st.caption(f"Active file: {active_file}")
-    summaries = file_table_summaries(active_file)
-    if summaries:
-        st.subheader("Available tables")
-        st.dataframe(pd.DataFrame(summaries), use_container_width=True, hide_index=True)
-    else:
-        st.info("Load the file to create tables.")
+selected_tables = tables_for_datasets(selected_datasets)
+
+if selected_tables:
+    st.caption("Selected datasets: " + ", ".join(selected_datasets))
+else:
+    st.info("Select at least one dataset.")
 
 if "messages" not in st.session_state:
     st.session_state.messages = []
@@ -138,12 +135,12 @@ for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.write(message["content"])
 
-question = st.chat_input("Ask about the selected file")
+question = st.chat_input("Ask about the selected datasets")
 if question:
-    if not active_file:
-        st.warning("Load a file first.")
+    if not selected_tables:
+        st.warning("Select at least one dataset first.")
     else:
         st.session_state.messages.append({"role": "user", "content": question})
-        answer = answer_question(question, active_file)
+        answer = answer_question(question, selected_tables)
         st.session_state.messages.append({"role": "assistant", "content": answer})
         st.rerun()

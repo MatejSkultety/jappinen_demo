@@ -1,11 +1,10 @@
 # AI Data Analyst PoC
 
-Very small Streamlit proof of concept for uploading Excel files and asking simple data-quality questions.
+Very small Streamlit proof of concept for uploading Excel files, ingesting them directly into SQLite, and asking simple data-quality questions.
 
 ## What it does
 
-- Upload `.xlsx` files to a local folder.
-- Load one uploaded file into a local SQLite database.
+- Upload `.xlsx` files and ingest them directly into a local SQLite database.
 - Use Chat to ask simple questions about tables, rows, columns, missing values, and basic profiling.
 
 ## Run locally

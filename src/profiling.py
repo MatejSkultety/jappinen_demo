@@ -1,5 +1,4 @@
 from .db import get_connection, quote_identifier, table_columns, table_row_count
-from .ingest import tables_for_file
 
 
 def missing_values_by_column(connection, table_name: str) -> dict[str, int]:
@@ -27,6 +26,6 @@ def profile_table(connection, table_name: str) -> dict:
     }
 
 
-def file_table_summaries(file_name: str) -> list[dict]:
+def table_summaries(table_names: list[str]) -> list[dict]:
     with get_connection() as connection:
-        return [profile_table(connection, table_name) for table_name in tables_for_file(file_name)]
+        return [profile_table(connection, table_name) for table_name in table_names]
